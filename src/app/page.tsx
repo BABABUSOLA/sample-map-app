@@ -126,7 +126,19 @@ export default function Home() {
       }),
   ];
 
-  if (!data) return <div>Loading map...</div>;
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="flex flex-col items-center space-y-2">
+          {/* Spinner */}
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+
+          {/* Loading Text */}
+          <p className="text-sm font-medium text-blue-600">Loading map...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen w-screen">
