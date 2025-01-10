@@ -119,9 +119,7 @@ export default function Home() {
           filterValue[0] * 0.9 + filterValue[1] * 0.1,
           filterValue[0] * 0.1 + filterValue[1] * 0.9,
         ],
-        parameters: {
-          depthTest: false, // Disable depth testing to avoid conflicts
-        },
+
         pickable: true,
       }),
   ];
