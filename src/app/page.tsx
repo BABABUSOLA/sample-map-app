@@ -1,101 +1,160 @@
-import Image from "next/image";
+"use client";
+
+import React, { useState, useMemo, useEffect } from "react";
+import { Map } from "react-map-gl/maplibre";
+import DeckGL from "@deck.gl/react";
+import { ScatterplotLayer } from "@deck.gl/layers";
+import { DataFilterExtension } from "@deck.gl/extensions";
+import { MapView } from "@deck.gl/core";
+import RangeInput from "@/components/range-input";
+import type { DataFilterExtensionProps } from "@deck.gl/extensions";
+
+const DATA_URL =
+  "https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/earthquakes/data.csv";
+
+const MAP_VIEW = new MapView({
+  repeat: true,
+  farZMultiplier: 10,
+});
+
+const INITIAL_VIEW_STATE = {
+  latitude: 36.5,
+  longitude: -120,
+  zoom: 8.5, //this increases the zoom
+  pitch: 0,
+  bearing: 0,
+};
+
+// const MAP_STYLE =
+//   "https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json";
+// The above style is the plain map base without color, u might need to get a json for the style of the map you want
+
+const MAP_STYLE = "https://demotiles.maplibre.org/style.json";
+
+const MS_PER_DAY = 8.64e7;
+
+type Earthquake = {
+  timestamp: number;
+  latitude: number;
+  longitude: number;
+  depth: number;
+  magnitude: number;
+};
+
+const dataFilter = new DataFilterExtension({ filterSize: 1, fp64: false });
+
+function formatLabel(timestamp: number) {
+  const date = new Date(timestamp);
+  return `${date.getUTCFullYear()}/${date.getUTCMonth() + 1}`;
+}
+
+function getTimeRange(data: Earthquake[]) {
+  return data.reduce<[number, number]>(
+    (range, d) => {
+      const t = d.timestamp;
+      // Validate timestamp (ensure it's a valid number)
+      if (typeof t !== "number" || isNaN(t)) {
+        console.warn("Invalid timestamp:", t, d); // Debug log for invalid timestamps
+        return range; // Skip this entry
+      }
+      range[0] = Math.min(range[0], t);
+      range[1] = Math.max(range[1], t);
+      return range;
+    },
+    [Infinity, -Infinity]
+  );
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [data, setData] = useState<Earthquake[] | null>(null);
+  const [filter, setFilter] = useState<[number, number] | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await fetch(DATA_URL);
+      const text = await response.text();
+
+      // Parse CSV data
+      const rows = text
+        .split("\n")
+        .slice(1)
+        .map((line) => line.split(","));
+      const parsedData = rows.map((row) => ({
+        timestamp: new Date(`${row[0]} UTC`).getTime(),
+        latitude: parseFloat(row[1]),
+        longitude: parseFloat(row[2]),
+        depth: parseFloat(row[3]),
+        magnitude: parseFloat(row[4]),
+      }));
+      setData(parsedData);
+    };
+
+    fetchData();
+  }, []);
+
+  const timeRange = useMemo(() => (data ? getTimeRange(data) : null), [data]);
+  console.log({ timeRange });
+  const filterValue = timeRange ?? filter;
+  console.log({ filterValue });
+
+  const layers = [
+    filterValue &&
+      new ScatterplotLayer<Earthquake, DataFilterExtensionProps<Earthquake>>({
+        id: "earthquakes",
+        data: data || [],
+        opacity: 0.8,
+        radiusScale: 100,
+        radiusMinPixels: 1,
+        wrapLongitude: true,
+
+        getPosition: (d) => [d.longitude, d.latitude, -d.depth * 1000],
+        getRadius: (d) => Math.pow(2, d.magnitude),
+        getFillColor: (d) => {
+          const r = Math.sqrt(Math.max(d.depth, 0));
+          return [255 - r * 15, r * 5, r * 10];
+        },
+        extensions: [dataFilter],
+        filterRange: [filterValue[0], filterValue[1]],
+        filterSoftRange: [
+          filterValue[0] * 0.9 + filterValue[1] * 0.1,
+          filterValue[0] * 0.1 + filterValue[1] * 0.9,
+        ],
+        parameters: {
+          depthTest: false, // Disable depth testing to avoid conflicts
+        },
+        pickable: true,
+      }),
+  ];
+
+  if (!data) return <div>Loading map...</div>;
+
+  return (
+    <div className="h-screen w-screen">
+      <DeckGL
+        views={MAP_VIEW}
+        layers={layers}
+        initialViewState={INITIAL_VIEW_STATE}
+        controller
+        getTooltip={({ object }: { object: Earthquake }) =>
+          object
+            ? `Time: ${new Date(object.timestamp).toUTCString()}\nMagnitude: ${
+                object.magnitude
+              }\nDepth: ${object.depth}`
+            : null
+        }
+      >
+        <Map reuseMaps mapStyle={MAP_STYLE} />
+      </DeckGL>
+      {timeRange && (
+        <RangeInput
+          min={timeRange[0]}
+          max={timeRange[1]}
+          value={filterValue}
+          animationSpeed={MS_PER_DAY * 30}
+          formatLabel={formatLabel}
+          onChange={setFilter}
+        />
+      )}
     </div>
   );
 }
