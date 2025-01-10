@@ -1,5 +1,9 @@
 Here’s a **README.md** file for your project, describing its functionality, purpose, setup instructions, and usage details:
 
+## Demo link
+
+https://sample-map-app.vercel.app/
+
 ---
 
 # **Earthquake Data Visualization**
