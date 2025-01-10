@@ -20,7 +20,7 @@ const MAP_VIEW = new MapView({
 const INITIAL_VIEW_STATE = {
   latitude: 36.5,
   longitude: -120,
-  zoom: 8.5, //this increases the zoom
+  zoom: 5.5, //this increases the zoom
   pitch: 0,
   bearing: 0,
 };
