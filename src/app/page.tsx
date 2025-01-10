@@ -119,7 +119,9 @@ export default function Home() {
           filterValue[0] * 0.9 + filterValue[1] * 0.1,
           filterValue[0] * 0.1 + filterValue[1] * 0.9,
         ],
-
+        // parameters: {
+        //   depthTest: false, // Disable depth testing to avoid conflicts
+        // },
         pickable: true,
       }),
   ];
@@ -133,17 +135,18 @@ export default function Home() {
         layers={layers}
         initialViewState={INITIAL_VIEW_STATE}
         controller
-        getTooltip={({ object }: { object: Earthquake }) =>
-          object
+        getTooltip={(info) => {
+          const { object } = info;
+          return object
             ? `Time: ${new Date(object.timestamp).toUTCString()}\nMagnitude: ${
                 object.magnitude
               }\nDepth: ${object.depth}`
-            : null
-        }
+            : null;
+        }}
       >
         <Map reuseMaps mapStyle={MAP_STYLE} />
       </DeckGL>
-      {timeRange && (
+      {timeRange && filterValue !== null && (
         <RangeInput
           min={timeRange[0]}
           max={timeRange[1]}
